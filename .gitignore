@@ -1,5 +1,6 @@
 *.csv
 *.idea
+*.dat
 .ipynb_checkpoints
 __pycache__/
 sec.csv

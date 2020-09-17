@@ -2,55 +2,17 @@ import os
 from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
 
-import dash
-import dash_core_components as dcc
-import dash_html_components as html
-
-
-# app = Flask(__name__)
-#
-#
-# basedir = os.path.abspath(os.path.dirname(__file__))
-#
-# app = Flask(__name__)
-# app.config["SECRET_KEY"] = "hard to guess string"
-# app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(
-#     basedir, "data.sqlite"
-# )
-# app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-#
-# db = SQLAlchemy(app)
-#
-#
-# class Role(db.Model):
-#     __tablename__ = "roles"
-#     id = db.Column(db.Integer, primary_key=True)
-#     name = db.Column(db.String(64), unique=True)
-#     users = db.relationship("User", backref="role", lazy="dynamic")
-#
-#     def __repr__(self):
-#         return "<Role %r>" % self.name
-#
-#
-# @app.route('/')
-# def hello_world():
-#     return render_template('index.html') #this has changedprint(path.parent.parent)
-#
-#
-# if __name__ == '__main__':
-#     app.run()
-
-
-# -*- coding: utf-8 -*-
-
-# Run this app with `python app.py` and
-# visit http://127.0.0.1:8050/ in your web browser.
 
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+from dash.dependencies import Input, Output
 import plotly.express as px
 import pandas as pd
+from pathlib import Path
+from data_processing.data_processing import currency_find_leader_sec_points
+
+
 
 external_stylesheets = ["https://codepen.io/chriddyp/pen/bWLwgP.css"]
 
@@ -58,17 +20,29 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 colors = {"background": "#111111", "text": "#7FDBFF"}
 
-# assume you have a "long-form" data frame
-# see https://plotly.com/python/px-arguments/ for more options
-df = pd.DataFrame(
-    {
-        "Fruit": ["Apples", "Oranges", "Bananas", "Apples", "Oranges", "Bananas"],
-        "Amount": [4, 1, 2, 2, 4, 5],
-        "City": ["SF", "SF", "SF", "Montreal", "Montreal", "Montreal"],
-    }
-)
+sec_csv = Path(__file__).parent / 'data_processing' / 'sec.csv'
+print(sec_csv)
 
-fig = px.plot(df, x="Fruit", y="Amount", color="City", barmode="group")
+df = pd.read_csv(sec_csv)
+cur_df = pd.read_csv('id_currency.csv', sep=';',names=['id', 'name'])
+
+print(cur_df)
+
+cur_give = 25
+
+cur_take = 139
+
+
+leader, points = currency_find_leader_sec_points(cur_give, cur_take)
+
+data = df.loc[df['saler_id'] == leader]
+
+name_give = cur_df.loc[cur_df['id'] == cur_give, 'name']
+name_take = cur_df.loc[cur_df['id'] == cur_take, 'name']
+fig = px.line(data, x=points['datetime'], y=points['cur_give_num'], title=f'продажа {name_give.values}\n покупка {name_take.values}')
+
+
+# fig = px.bar(df, x="Fruit", y="Amount")
 
 fig.update_layout(
     plot_bgcolor=colors["background"],
@@ -77,12 +51,9 @@ fig.update_layout(
 )
 
 markdown_text = """
-Данные о курсах взяты отсюда(https://www.bestchange.net)
+Данные о курсах взяты c сайта https://www.bestchange.net
 """
 
-# app.layout = html.Div([
-#     dcc.Markdown(children=markdown_text)
-# ])
 
 app.layout = html.Div(
     style={"backgroundColor": colors["background"]},
@@ -91,12 +62,34 @@ app.layout = html.Div(
             children="Анализ обменников на базе платформы BestChange",
             style={"textAlign": "center", "color": colors["text"]},
         ),
-        dcc.Graph(id="example-graph-2", figure=fig),
         dcc.Markdown(
             markdown_text, style={"textAlign": "center", "color": colors["text"]}
         ),
+        dcc.Graph(id="graph_with_slider", figure=fig),
+        dcc.Slider(
+            id='time-slider',
+            min=1,
+            max=7,
+            value=1,
+            marks={str(i):name  for i, name in zip(range(2,7),['секунды', 'десятки сек', 'минуты', 'часы', 'дни'])},
+            step=None
+        )
     ],
 )
+
+@app.callback(
+    Output('graph-with-slider', 'figure'),
+    [Input('year-slider', 'value')])
+def update_figure(selected_year):
+    filtered_df = df[df.year == selected_year]
+
+    fig = px.scatter(filtered_df, x="gdpPercap", y="lifeExp", 
+                     size="pop", color="continent", hover_name="country", 
+                     log_x=True, size_max=55)
+
+    fig.update_layout(transition_duration=500)
+
+    return fig
 
 if __name__ == "__main__":
     app.run_server(debug=True)
