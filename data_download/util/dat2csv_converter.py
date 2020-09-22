@@ -1,7 +1,7 @@
+import os
 from datetime import datetime
 import csv
 from pathlib import Path
-
 
 def dat_to_csv_converter(filename):
     zippath = Path(__file__).resolve().parents[1] / 'zipdir'
@@ -15,6 +15,9 @@ def dat_to_csv_converter(filename):
         for line in dat_file:
             uline = line.encode("utf-8").decode("utf-8")
             row = [field.strip() for field in uline.split(";")]
-            row = row[0:6]
+            # row = row[0:6]
             row.append(time)
             csv_writer.writerow(row)
+
+for file in os.listdir(Path(__file__).resolve().parents[1] / 'zipdir'):
+    dat_to_csv_converter(file)

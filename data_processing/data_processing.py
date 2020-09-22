@@ -4,7 +4,35 @@ from typing import Optional, List
 from datetime import datetime
 from pathlib import Path
 
+
+
+from sqlalchemy import create_engine, MetaData
+from sqlalchemy.orm import sessionmaker
+from pathlib import Path
+import pandas as pd
+from db.db_model import DATABASE_URL, Base,  Currency, Saler, Currency_pair
+from data_download.download_data import download_data
+
 datapath = Path(__file__).resolve().parents[1] / "data_download" / "datadir"
+
+
+engine = create_engine(DATABASE_URL, echo = True)
+Session = sessionmaker(bind=engine)
+session = Session()
+
+def make_new_pair() -> bool:
+    download_data()
+    pairs = session.query(Currency_pair).all()
+    elif len(pairs) <=50:
+        #нужно только вставить
+        pass
+    elif len(pairs) > 50:
+        #удалить самый давний и вставить новый
+        pass
+    return True
+
+make_new_pair()
+
 
 
 def currency_retrieval(filename) -> Optional[pd.DataFrame]:
@@ -48,6 +76,7 @@ def gather_init_data():
 
 
 # gather_init_data()
+
 
 
 def currency_find_leader_sec_points(currency_1: int, currency_2: int):
