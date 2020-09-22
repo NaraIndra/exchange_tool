@@ -1,0 +1,4 @@
+*.csv filter=lfs diff=lfs merge=lfs -text
+id_currency.csv filter=lfs diff=lfs merge=lfs -text
+sec.csv filter=lfs diff=lfs merge=lfs -text
+data_processing/sec.csv filter=lfs diff=lfs merge=lfs -text
