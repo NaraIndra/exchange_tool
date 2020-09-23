@@ -5,11 +5,11 @@ from pathlib import Path
 
 url = "http://api.bestchange.ru/info.zip"
 path = Path(__file__).parent
-zippath = path.parent / "download_data" / "zipdir"
+zippath = path.parent / "download" / "zipdir"
 infopath = path / 'info'
 zipfilepath = ""
 
-Path(path.parent /  "download_data"  / "zipdir").mkdir(parents=True, exist_ok=True)
+Path(path.parent /  "download"  / "zipdir").mkdir(parents=True, exist_ok=True)
 Path(path / "info").mkdir(parents=True, exist_ok=True)
 
 def reformat_info_data():
