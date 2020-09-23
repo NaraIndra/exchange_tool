@@ -10,10 +10,11 @@ from db.db_model import DATABASE_URL, Base,  Currency, Saler
 from sqlalchemy import inspect
 
 engine = create_engine(DATABASE_URL, echo = True)
-Base.metadata.bind = engine
+# Base.metadata.bind = engine
 Session = sessionmaker(bind=engine)
 session = Session()
 
+print(Base.metadata)
 
 def populate_currency():
     csv_data = pd.read_csv("id_currency.csv", delimiter=";")
@@ -43,6 +44,3 @@ def populate_saler():
         saler = Saler(num = x[0], name = x[1])
         session.add(saler)
     session.commit()
-
-populate_currency()
-populate_saler()

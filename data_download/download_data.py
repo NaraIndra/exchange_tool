@@ -30,7 +30,7 @@ else:
     filepath = path / "info.zip"
 
 
-def download_data() -> bool:
+def download() -> bool:
     '''
     Загружает данные единожды
     Returns: успех завершения операции
@@ -53,14 +53,13 @@ def download_data() -> bool:
             a = zipObj.extractall(zippath)
         for file in os.listdir(zippath):
             if ".dat" in  file:
-                os.rename(zippath / file, zippath / f"0_{file}")
-                dat_to_csv_converter(f"0_{file}")
+                # os.rename(zippath / file, zippath / f"0_{file}")
+                dat_to_csv_converter(f"{file}")
         cleaner("dat")
         return True
     except:
         return False
 
-download_data()
 
 def downloader():
     '''
@@ -69,7 +68,7 @@ def downloader():
 
     '''
     while True:
-        download_data()
+        download()
 
 def download_k_times(k: int):
     '''
@@ -89,7 +88,7 @@ def download_k_times(k: int):
                 a = zipObj.extractall(zippath)
                 for file in os.listdir(zippath):
                     if "bm_rates.dat" == file:
-                        os.rename(zippath / file, zippath / f"{i}_{file}")
+                        # os.rename(zippath / file, zippath / f"{i}_{file}")
                         dat_to_csv_converter(f"{i}_{file}")
                 cleaner("dat")
             os.remove(os.path.join(path, 'info.zip'))

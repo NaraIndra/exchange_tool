@@ -35,15 +35,14 @@ Base = declarative_base(metadata=mymetadata)
 
 class Currency(Base):
     __tablename__ = "currency"
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, nullable=False, primary_key=True)
     num = Column(Integer, unique=True, nullable=False)
     name = Column(String(30), unique=True, nullable=False)
-    # cur_give = relationship('Currency_pair')
 
 
 class Saler(Base):
     __tablename__ = "saler"
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, nullable=False, primary_key=True)
     num = Column(Integer, unique=True, nullable=False)
     name = Column(String(30), unique=True, nullable=False)
 
