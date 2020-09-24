@@ -14,7 +14,6 @@ engine = create_engine(DATABASE_URL, echo = True)
 Session = sessionmaker(bind=engine)
 session = Session()
 
-print(Base.metadata)
 
 def populate_currency():
     csv_data = pd.read_csv("id_currency.csv", delimiter=";")

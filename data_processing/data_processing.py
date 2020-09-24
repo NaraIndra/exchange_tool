@@ -128,21 +128,3 @@ def retrive_leader_points_sec(currency_give: int, currency_take: int, leader: in
     pass
 
 
-# currency_find_leader_sec(63, 139)
-
-# for x in os.listdir(datapath):
-#     if x.split('.')[1] == 'csv':
-#         row = currency_pair_retrieval(datapath / x, cur_give_id, cur_take_id)
-#         ans.append(row)
-# appended = pd.concat(ans).sort_values(by=['datetime'])
-# last_period = appended['datetime'].max()
-# min_value = appended['cur_give_num'].min()
-# best = appended.loc[(appended['datetime'] == last_period) & (appended['cur_give_num'] == min_value), 'saler_id']
-# print(best)
-# print(best.values)
-# dots = appended.loc[appended['saler_id'] == best.values[0], ['cur_give_num', 'id']]
-# dots.plot(x='id', y='cur_give_num')
-# print(dots)
-
-
-# currency_find_leader_sec_points(63, 139)

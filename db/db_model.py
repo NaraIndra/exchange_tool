@@ -1,10 +1,7 @@
 from pathlib import Path
+from sqlalchemy.orm import relationship
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
-from sqlalchemy import create_engine, MetaData
-
 from sqlalchemy import (
     BigInteger,
     Column,
@@ -14,40 +11,35 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    DateTime,
     UniqueConstraint,
     text,
 )
 
-# Base = declarative_base()
-# metadata = Base.metadata
+SQLALCHEMY_TRACK_MODIFICATIONS = False
 DATABASE_URL = f"sqlite:///{Path(__file__).parent}/exchange.db"
-SECRET_KEY = "1234asdf"
-
-# Base = declarative_base()
-# metadata = Base.metadata
-#
-mymetadata = MetaData()
-Base = declarative_base(metadata=mymetadata)
+app = Flask(__name__)
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
+app.config['SQLALCHEMY_ECHO'] = True
+db = SQLAlchemy(app)
 
 
-# Base = declarative_base()
-
-
-class Currency(Base):
+class Currency(db.Model):
     __tablename__ = "currency"
     id = Column(Integer, nullable=False, primary_key=True)
     num = Column(Integer, unique=True, nullable=False)
     name = Column(String(30), unique=True, nullable=False)
 
 
-class Saler(Base):
+class Saler(db.Model):
     __tablename__ = "saler"
     id = Column(Integer, nullable=False, primary_key=True)
     num = Column(Integer, unique=True, nullable=False)
     name = Column(String(30), unique=True, nullable=False)
 
 
-class Currency_pair(Base):
+class Currency_pair(db.Model):
     __tablename__ = "currency_pair"
     id = Column(Integer, primary_key=True)
     currency_give_id = Column(
@@ -67,10 +59,10 @@ class Currency_pair(Base):
         nullable=False,
         comment="ID продавца",
     )
+    amount_give = Column(Integer, nullable=False)
+    amount_take = Column(Integer, nullable=False)
+    volume = Column(Integer, nullable=False)
+    datetime = Column(DateTime, unique=True)
     currency_give = relationship("Currency", foreign_keys=[currency_give_id])
     currency_take = relationship("Currency", foreign_keys=[currency_take_id])
     saler = relationship("Saler", foreign_keys=[saler_id])
-
-
-engine = create_engine(DATABASE_URL)
-Base.metadata.create_all(engine)
