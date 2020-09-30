@@ -10,15 +10,15 @@ from sqlalchemy import create_engine, MetaData
 from sqlalchemy.orm import sessionmaker
 from pathlib import Path
 import pandas as pd
-from db.db_model import DATABASE_URL, Base,  Currency, Saler, Currency_pair
+from db.db_model import DATABASE_URL, Currency, Saler, Currency_pair
 from data_download.download_data import download
 
 datapath = Path(__file__).resolve().parents[1] / "data_download" / "datadir"
 
-
-engine = create_engine(DATABASE_URL, echo = True)
-Session = sessionmaker(bind=engine)
-session = Session()
+#
+# engine = create_engine(DATABASE_URL, echo = True)
+# Session = sessionmaker(bind=engine)
+# session = Session()
 
 def currency_retrieval(filename) -> Optional[pd.DataFrame]:
 
@@ -128,21 +128,3 @@ def retrive_leader_points_sec(currency_give: int, currency_take: int, leader: in
     pass
 
 
-# currency_find_leader_sec(63, 139)
-
-# for x in os.listdir(datapath):
-#     if x.split('.')[1] == 'csv':
-#         row = currency_pair_retrieval(datapath / x, cur_give_id, cur_take_id)
-#         ans.append(row)
-# appended = pd.concat(ans).sort_values(by=['datetime'])
-# last_period = appended['datetime'].max()
-# min_value = appended['cur_give_num'].min()
-# best = appended.loc[(appended['datetime'] == last_period) & (appended['cur_give_num'] == min_value), 'saler_id']
-# print(best)
-# print(best.values)
-# dots = appended.loc[appended['saler_id'] == best.values[0], ['cur_give_num', 'id']]
-# dots.plot(x='id', y='cur_give_num')
-# print(dots)
-
-
-# currency_find_leader_sec_points(63, 139)
