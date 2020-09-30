@@ -28,7 +28,7 @@ def update_currency() -> bool:
     data = None
     try:
         data = pd.read_csv(
-            datapath / filename, usecols=[0, 1], names=["num", "name"], delimiter=","
+            datapath / filename, usecols=[0, 1], names=["id", "name"], delimiter=","
         )
     except:
         print(f"first need to download a file with currencies")
@@ -111,34 +111,35 @@ def make_new_pair() -> bool:
         print(f"first need to download a file with currencies")
         return False
     ans = []
-    print(pairs.columns)
-    # db_pairs = session.query()
-    print(pairs.describe())
-    # pairs['datetime'].to_datetime()
     pairs['datetime'] =  pd.to_datetime(pairs['datetime'])
-    print(pairs.dtypes)
+    # print(pairs.dtypes)
     count = db.session.query(Currency_pair).distinct(Currency_pair.datetime).count()
+    print(count)
     if count < 50:
         start_time = time.time()
         pairs = pairs.values.tolist()
+        ans = []
         for pair in pairs:
             # print(pair[0], pair[1])
-            # cur_give = db.session.query(Currency).filter(Currency.num == pair[0]).all()
-            # cur_take = db.session.query(Currency).filter(Currency.num == pair[1]).all()
-            pair = Currency_pair(
-                currency_give_id=-100000,
-                currency_take_id=pair[1],
-                saler_id=pair[2],
+            cur_give = db.session.query(Currency.id).filter(Currency.num == pair[0]).all()[0][0]
+            cur_take = db.session.query(Currency.id).filter(Currency.num == pair[1]).all()[0][0]
+            sale = db.session.query(Saler.id).filter(Saler.num == pair[2]).all()[0][0]
+            pair_tuple = Currency_pair(
+                currency_give_id=cur_give,
+                currency_take_id=cur_take,
+                saler_id=sale,
                 amount_give=pair[3],
                 amount_take=pair[4],
                 volume=pair[5],
                 datetime=pair[6],
             )
-            db.session.add(pair)
+            ans.append(pair_tuple)
+        db.session.add_all(ans)
         db.session.commit()
         data = db.session.query(Currency_pair).all()
-        print(data)
-    # print(f'! {time.time() - start_time}, {count}')
+        # print(data)
+        print('!!!', len(data))
+        print(f'! {time.time() - start_time}, {count}')
     # elif count >= 50:
     #     # удалить самый давний и вставить новый
     #     pass
@@ -146,19 +147,27 @@ def make_new_pair() -> bool:
 
 # a = Currency_pair.query.limit(100)
 # print([x.currency_give_id for x in a])
-make_new_pair()
+# make_new_pair()
 
 
 def update_data() -> bool:
     """
+    обновляет данные всех трех таблиц, скачивая архив из ресурса
 
     Returns:
-
     """
     # try:
     # download()
     # except:
-    print(f"скачивание не удалось")
+    try:
+       download()
+       update_currency()
+       update_saler()
+       make_new_pair()
+
+    except:
+        print(f"скачивание не удалось")
 
 
-# make_new_pair()
+update_data()
+

@@ -21,7 +21,7 @@ DATABASE_URL = f"sqlite:///{Path(__file__).parent}/exchange.db"
 app = Flask(__name__)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
-app.config['SQLALCHEMY_ECHO'] = True
+# app.config['SQLALCHEMY_ECHO'] = True
 
 db = SQLAlchemy(app)
 
@@ -52,7 +52,7 @@ class Saler(db.Model):
 
 class Currency_pair(db.Model):
     __tablename__ = "currency_pair"
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, nullable = False, primary_key=True)
     currency_give_id = Column(
         Integer,
         ForeignKey("currency.id", ondelete="CASCADE"),
@@ -78,4 +78,9 @@ class Currency_pair(db.Model):
     currency_take = relationship("Currency", foreign_keys=[currency_take_id])
     saler = relationship("Saler", foreign_keys=[saler_id])
 
+    def __repr__(self):
+        return f'{self.id=}\n{self.currency_give_id=}\n{self.currency_take_id=}' \
+        f'{self.amount_give=}\n{self.amount_take=}\n{self.currency_take=}'
+
+# db.drop_all()
 db.create_all()

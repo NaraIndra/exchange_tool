@@ -39,6 +39,3 @@ def populate_saler():
         saler = Saler(num = x[0], name = x[1])
         db.session.add(saler)
     db.session.commit()
-
-populate_saler()
-populate_currency()
