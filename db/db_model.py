@@ -23,6 +23,16 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_ECHO'] = True
 db = SQLAlchemy(app)
+# Ensure FOREIGN KEY for sqlite3
+if 'sqlite' in app.config['SQLALCHEMY_DATABASE_URI']:
+    def _fk_pragma_on_connect(dbapi_con, con_record):  # noqa
+        dbapi_con.execute('pragma foreign_keys=ON')
+
+
+    with app.app_context():
+        from sqlalchemy import event
+
+        event.listen(db.engine, 'connect', _fk_pragma_on_connect)
 
 
 class Currency(db.Model):
@@ -59,10 +69,16 @@ class Currency_pair(db.Model):
         nullable=False,
         comment="ID продавца",
     )
-    amount_give = Column(Integer, nullable=False)
-    amount_take = Column(Integer, nullable=False)
-    volume = Column(Integer, nullable=False)
-    datetime = Column(DateTime, unique=True)
+    amount_give = Column(Integer, index = True, nullable=False)
+    amount_take = Column(Integer, index = True, nullable=False)
+    volume = Column(Integer, index = True, nullable=False)
+    datetime = Column(DateTime, index = True, unique=False)
     currency_give = relationship("Currency", foreign_keys=[currency_give_id])
     currency_take = relationship("Currency", foreign_keys=[currency_take_id])
     saler = relationship("Saler", foreign_keys=[saler_id])
+
+db.drop_all()
+db.create_all()
+#
+# a = Currency.query.limit(10)
+# print([x.id for x in a])

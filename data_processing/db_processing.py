@@ -1,3 +1,4 @@
+import time
 from sqlalchemy import create_engine
 from sqlalchemy.types import Integer, Text, String, DateTime
 from sqlalchemy.orm import sessionmaker
@@ -110,15 +111,22 @@ def make_new_pair() -> bool:
         print(f"first need to download a file with currencies")
         return False
     ans = []
-    print(pairs)
+    print(pairs.columns)
     # db_pairs = session.query()
+    print(pairs.describe())
+    # pairs['datetime'].to_datetime()
+    pairs['datetime'] =  pd.to_datetime(pairs['datetime'])
+    print(pairs.dtypes)
     count = db.session.query(Currency_pair).distinct(Currency_pair.datetime).count()
-
     if count < 50:
+        start_time = time.time()
         pairs = pairs.values.tolist()
         for pair in pairs:
+            # print(pair[0], pair[1])
+            # cur_give = db.session.query(Currency).filter(Currency.num == pair[0]).all()
+            # cur_take = db.session.query(Currency).filter(Currency.num == pair[1]).all()
             pair = Currency_pair(
-                currency_give_id=pair[0],
+                currency_give_id=-100000,
                 currency_take_id=pair[1],
                 saler_id=pair[2],
                 amount_give=pair[3],
@@ -128,12 +136,16 @@ def make_new_pair() -> bool:
             )
             db.session.add(pair)
         db.session.commit()
-    elif count >= 50:
-        # удалить самый давний и вставить новый
-        pass
-    return True
+        data = db.session.query(Currency_pair).all()
+        print(data)
+    # print(f'! {time.time() - start_time}, {count}')
+    # elif count >= 50:
+    #     # удалить самый давний и вставить новый
+    #     pass
+    # return True
 
-
+# a = Currency_pair.query.limit(100)
+# print([x.currency_give_id for x in a])
 make_new_pair()
 
 

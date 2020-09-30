@@ -6,13 +6,9 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from pathlib import Path
 import pandas as pd
-from db.db_model import DATABASE_URL, Base,  Currency, Saler
+from db.db_model import db,  Currency, Saler
 from sqlalchemy import inspect
 
-engine = create_engine(DATABASE_URL, echo = True)
-# Base.metadata.bind = engine
-Session = sessionmaker(bind=engine)
-session = Session()
 
 
 def populate_currency():
@@ -26,8 +22,8 @@ def populate_currency():
             ans.append((row[0], row[1]))
     for x in ans:
         cur = Currency(num = x[0], name = x[1])
-        session.add(cur)
-    session.commit()
+        db.session.add(cur)
+    db.session.commit()
 
 
 def populate_saler():
@@ -41,5 +37,8 @@ def populate_saler():
             ans.append((row[0], row[1]))
     for x in ans:
         saler = Saler(num = x[0], name = x[1])
-        session.add(saler)
-    session.commit()
+        db.session.add(saler)
+    db.session.commit()
+
+populate_saler()
+populate_currency()
