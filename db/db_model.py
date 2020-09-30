@@ -22,8 +22,9 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_ECHO'] = True
+
 db = SQLAlchemy(app)
-# Ensure FOREIGN KEY for sqlite3
+
 if 'sqlite' in app.config['SQLALCHEMY_DATABASE_URI']:
     def _fk_pragma_on_connect(dbapi_con, con_record):  # noqa
         dbapi_con.execute('pragma foreign_keys=ON')
@@ -77,8 +78,4 @@ class Currency_pair(db.Model):
     currency_take = relationship("Currency", foreign_keys=[currency_take_id])
     saler = relationship("Saler", foreign_keys=[saler_id])
 
-db.drop_all()
 db.create_all()
-#
-# a = Currency.query.limit(10)
-# print([x.id for x in a])
