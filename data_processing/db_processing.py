@@ -1,10 +1,10 @@
 import time
-from sqlalchemy import create_engine
-from sqlalchemy.types import Integer, Text, String, DateTime
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import func, distinct, tuple_
+from sqlalchemy.exc import SQLAlchemyError
 from pathlib import Path
 import pandas as pd
 from db.db_model import db, Currency, Saler, Currency_pair
+
 from data_download.download_data import download
 
 datapath = Path(__file__).resolve().parents[1] / "data_download" / "datadir"
@@ -38,7 +38,7 @@ def update_currency() -> bool:
         if not ans:
             ans.append((row[0], row[1]))
         elif (not row[0] in [x[0] for x in ans]) and (
-            not row[1] in [x[1] for x in ans]
+                not row[1] in [x[1] for x in ans]
         ):
             ans.append((row[0], row[1]))
     db.session.query(Currency).delete()
@@ -71,7 +71,7 @@ def update_saler() -> bool:
         if not ans:
             ans.append((row[0], row[1]))
         elif (not row[0] in [x[0] for x in ans]) and (
-            not row[1] in [x[1] for x in ans]
+                not row[1] in [x[1] for x in ans]
         ):
             ans.append((row[0], row[1]))
     db.session.query(Saler).delete()
@@ -106,40 +106,44 @@ def make_new_pair() -> bool:
                 "datetime",
             ],
             delimiter=",",
-        )
+            )
     except:
         print(f"first need to download a file with currencies")
         return False
     ans = []
     pairs['datetime'] =  pd.to_datetime(pairs['datetime'])
-    # print(pairs.dtypes)
-    count = db.session.query(Currency_pair).distinct(Currency_pair.datetime).count()
+    count = db.session.query(Currency_pair.datetime).distinct(Currency_pair.datetime).count()
     print(count)
-    if count < 50:
+    if count < 5:
         start_time = time.time()
         pairs = pairs.values.tolist()
         ans = []
         for pair in pairs:
-            # print(pair[0], pair[1])
-            cur_give = db.session.query(Currency.id).filter(Currency.num == pair[0]).all()[0][0]
-            cur_take = db.session.query(Currency.id).filter(Currency.num == pair[1]).all()[0][0]
-            sale = db.session.query(Saler.id).filter(Saler.num == pair[2]).all()[0][0]
+            print(pair)
             pair_tuple = Currency_pair(
-                currency_give_id=cur_give,
-                currency_take_id=cur_take,
-                saler_id=sale,
+                cur_give_num=pair[0],
+                cur_take_num=pair[1],
+                saler_num = pair[2],
+                # currency_give_id=pair[0],
+                # currency_take_id=pair[1],
+                # saler_id=pair[2],
                 amount_give=pair[3],
                 amount_take=pair[4],
                 volume=pair[5],
                 datetime=pair[6],
             )
+            print('a')
             ans.append(pair_tuple)
         db.session.add_all(ans)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except SQLAlchemyError as e:
+            print(str(e))
+            db.session.rollback()
         data = db.session.query(Currency_pair).all()
-        # print(data)
-        print('!!!', len(data))
-        print(f'! {time.time() - start_time}, {count}')
+    elif count >= 5:
+        min_date = db.session.query(Currency_pair.datetime).distinct(Currency_pair.datetime).all().sort()
+        print(min_date)
     # elif count >= 50:
     #     # удалить самый давний и вставить новый
     #     pass
@@ -159,15 +163,17 @@ def update_data() -> bool:
     # try:
     # download()
     # except:
+    start_time = time.time()
     try:
-       download()
-       update_currency()
-       update_saler()
-       make_new_pair()
-
+        download()
+        update_currency()
+        update_saler()
+        make_new_pair()
     except:
         print(f"скачивание не удалось")
 
+
+    print(f'! {time.time() - start_time}')
 
 update_data()
 
