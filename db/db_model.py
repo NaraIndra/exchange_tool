@@ -56,23 +56,6 @@ class Saler(db.Model):
 class Currency_pair(db.Model):
     __tablename__ = "currency_pair"
     id = Column(Integer, nullable = False, primary_key=True)
-    # currency_give_id = Column(
-    #     Integer,
-    #     ForeignKey("currency.id", ondelete="CASCADE"),
-    #     nullable=False,
-    #     comment="ID отдаваемой валюты",
-    # )
-    # currency_take_id = Column(
-    #     Integer,
-    #     ForeignKey("currency.id", ondelete="CASCADE"),
-    #     nullable=False,
-    #     comment="ID принимаемой валюты",
-    # )
-    # saler_id = Column(
-    #     ForeignKey("saler.id", ondelete="CASCADE"),
-    #     nullable=False,
-    #     comment="ID продавца",
-    # )
     cur_give_num = Column(Integer, index = True, nullable = False)
     cur_take_num = Column(Integer, index = True, nullable = False)
     saler_num = Column(Integer, index = True, nullable = False)

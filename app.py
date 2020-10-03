@@ -11,6 +11,7 @@ import plotly.express as px
 import pandas as pd
 from pathlib import Path
 from data_processing.data_processing import currency_find_leader_sec_points
+from db.db_model import db, Currency, Saler, Currency_pair
 
 
 
@@ -21,16 +22,20 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 colors = {"background": "#111111", "text": "#7FDBFF"}
 
 sec_csv = Path(__file__).parent / 'data_processing' / 'sec.csv'
-print(sec_csv)
+# print(sec_csv)
 
-df = pd.read_csv(sec_csv)
-cur_df = pd.read_csv('id_currency.csv', sep=';',names=['id', 'name'])
-
-print(cur_df)
+# df = pd.read_csv(sec_csv)
+# cur_df = pd.read_csv('id_currency.csv', sep=';',names=['id', 'name'])
+# print(cur_df)
 
 cur_give = 25
 
 cur_take = 139
+cur_df = pd.read_sql(db.session.query(Currency_pair).filter(Currency_pair.cur_give_num == cur_give,
+          Currency_pair.cur_take_num == cur_take).statement,db.session.bind)
+print(cur_df)
+print(len(cur_df))
+exit(-1)
 
 
 leader, points = currency_find_leader_sec_points(cur_give, cur_take)
