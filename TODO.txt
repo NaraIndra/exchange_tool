@@ -1,0 +1,12 @@
+# file requirements.txt has to be $project_folder
+#using python3.7, from the $project_folder run:
+virtualenv venv
+#if succeded:
+#swithch to python3.8
+sudo update-alternatives --config python3
+#go to venv:
+source venv/bin/activate
+#install pip for python3.8 (locally under venv):
+curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+python3 get-pip.py --force-reinstall
+pip install -r requirements.txt
