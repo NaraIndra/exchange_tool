@@ -63,12 +63,10 @@ class Currency_pair(db.Model):
     amount_take = Column(Integer, index = True, nullable=False)
     volume = Column(Integer, index = True, nullable=False)
     datetime = Column(DateTime, index = True, unique=False)
-    # currency_give = relationship("Currency", foreign_keys=[currency_give_id])
-    # currency_take = relationship("Currency", foreign_keys=[currency_take_id])
-    # saler = relationship("Saler", foreign_keys=[saler_id])
 
     def __repr__(self):
-        return f'{self.id=}\n{self.currency_give_id=}\n{self.currency_take_id=}' \
-               f'{self.amount_give=}\n{self.amount_take=}\n{self.currency_take=}'
+        return f'{self.id=}\n{self.cur_give_num=}\n{self.cur_take_num=}' \
+               f'{self.amount_give=}\n{self.amount_take=}\n{self.volume=}'\
+               f'{self.datetime}'
 
 db.create_all()

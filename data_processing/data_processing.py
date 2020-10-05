@@ -1,16 +1,15 @@
 import os
 import pandas as pd
 from typing import Optional, List
-from datetime import datetime
 from pathlib import Path
 
 
-
-from sqlalchemy import create_engine, MetaData
+from sqlalchemy import create_engine, MetaData, func, desc, DateTime
 from sqlalchemy.orm import sessionmaker
 from pathlib import Path
 import pandas as pd
-from db.db_model import DATABASE_URL, Currency, Saler, Currency_pair
+from datetime import datetime
+from db.db_model import DATABASE_URL, Currency, Saler, Currency_pair, db
 from data_download.download_data import download
 
 datapath = Path(__file__).resolve().parents[1] / "data_download" / "datadir"
@@ -19,6 +18,7 @@ datapath = Path(__file__).resolve().parents[1] / "data_download" / "datadir"
 # engine = create_engine(DATABASE_URL, echo = True)
 # Session = sessionmaker(bind=engine)
 # session = Session()
+
 
 def currency_retrieval(filename) -> Optional[pd.DataFrame]:
 
@@ -48,20 +48,78 @@ def currency_retrieval(filename) -> Optional[pd.DataFrame]:
     # row = data_new[(data_new.cur_give_id == cur_1) & (data_new.cur_take_id == cur_2)]
     return data_new
 
+def find_cp_last_datetime(currency_give_num: int, currency_take_num: int) -> Optional[datetime]:
+    '''
+    Находит последнюю дату записи в таблице Currency_pair
+    Args:
+        currency_give_num: номер отдаваемой валюты
+        currency_take_num: номер получаемой валюты
 
-def gather_init_data():
-    ans = []
-    for x in os.listdir(datapath):
-        print(x)
-        if x.split(".")[1] == "csv":
-            row = currency_retrieval(datapath / x)
-            ans.append(row)
-    appended = pd.concat(ans).sort_values(by=["datetime"])
-    appended.to_csv("sec.csv")
+    Returns: дата последней заключенной сделке по данной валюте
 
+    '''
 
-# gather_init_data()
+    last_time = db.session.query(Currency_pair.datetime)\
+    .filter(Currency_pair.cur_give_num == currency_give_num, Currency_pair.cur_take_num == currency_take_num)\
+    .order_by(desc('datetime')).limit(1).all()
 
+    return last_time[0][0]
+
+def pair_find_leader(currency_give_num: int, currency_take_num: int, last_datetime: datetime) -> Optional[int]:
+    '''
+    находит лидера по последней записи в бд currency_pair
+    Args:
+        currency_give_num:номер отдаваемой валюты
+        currency_take_num:номер получаемой валюты
+
+    Returns:номер обменника, в котором количество отдаваемой валюты
+    за получаемую валюту наименьшее
+    '''
+    data = db.session.query(Currency_pair).filter(
+            Currency_pair.cur_give_num == currency_give_num,
+            Currency_pair.cur_take_num == currency_take_num,
+            Currency_pair.datetime == last_datetime
+            ).all()
+    print(data)
+    # except:
+    #     print(f'no such pair in db: {currency_give_num=}, {currency_take_num=} at {last_datetime=}')
+    #     return None
+    if not len(data):
+        print('shit')
+        return  None
+    #здесь вытягиваю список для проверки, нужное значение - saler_num
+    #переделать с df на обычный список
+    min_value_saler_num = data.loc[data['amount_give'] == data['amount_give'].min(),
+    ['saler_num', 'amount_give', 'amount_take']]
+    print(min_value_saler_num)
+    return int(min_value_saler_num['saler_num'].values)
+
+def find_cp_leaderpoints_minutes(leader_num: int, last_datetime: DateTime,
+                                 currency_give: int, currency_take: int) -> Optional[List[float]]:
+    '''
+    Возвращает список значений количества отданной валюты у наиболее дешевого обменника
+    Args:
+        leader_num: номер лидера
+
+    Returns:список флотов(количество отдаваемой валюты в промежутке 1 часа(30 точек))
+    '''
+    print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!','leader-nun', leader_num)
+    try:
+        data = pd.read_sql(
+            db.session.query(Currency_pair.datetime, Currency_pair.amount_give)
+                .filter(
+                Currency_pair.cur_give_num == currency_give,
+                Currency_pair.cur_take_num == currency_take,
+                Currency_pair.saler_num == leader_num
+            )
+                .statement,
+            db.session.bind
+        )
+    except:
+        print(f'no such pair in db: {currency_give=}, {currency_take=}')
+        return None
+    print('xxxxxxxxxxxxxxx',data)
+    return data
 
 
 def currency_find_leader_sec_points(currency_1: int, currency_2: int):
@@ -74,24 +132,35 @@ def currency_find_leader_sec_points(currency_1: int, currency_2: int):
     Returns:
 
     """
-    data = pd.read_csv("sec.csv")
+    # data = pd.read_csv("sec.csv")
+    data = pd.read_sql(
+        db.session.query(Currency_pair)
+        .filter(
+            Currency_pair.cur_give_num == currency_1,
+            Currency_pair.cur_take_num == currency_2,
+        )
+        .statement,
+        db.session.bind,
+    )
+    print(data)
+    if not data:
+        return None, []
     last_period = data["datetime"].max()
     best = data.loc[
-        (data["cur_give_id"] == currency_1)
-        & (data["cur_take_id"] == currency_2)
-        & (data["datetime"] == data["datetime"].max()),
+        (data["cur_give_num"] == currency_1) &
+        (data["cur_take_num"] == currency_2) &
+        (data["datetime"] == last_period)
     ]
-    leader_id = best.loc[
-        (best["cur_give_num"] == best["cur_give_num"].min()), "saler_id"
+    leader_num = best.loc[
+        (best["cur_give_num"] == best["cur_give_num"].min()), "saler_num"
     ].values[0]
     points = data.loc[
-        (data["saler_id"] == leader_id)
-        & (data["cur_give_id"] == currency_1)
-        & (data["cur_take_id"] == currency_2),
-        ["cur_give_num", "datetime"]
+        (data["saler_num"] == leader_num)
+        & (data["cur_give_num"] == currency_1)
+        & (data["cur_take_num"] == currency_2),
+        ["amount_give", "datetime"],
     ]
-    return leader_id, points
-
+    return leader_num, points
 
 
 def currency_find_leader_10sec_points(currency_1: int, currency_2: int):
@@ -126,5 +195,3 @@ def currency_find_leader_10sec_points(currency_1: int, currency_2: int):
 def retrive_leader_points_sec(currency_give: int, currency_take: int, leader: int):
 
     pass
-
-

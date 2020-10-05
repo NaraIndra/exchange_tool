@@ -28,7 +28,7 @@ def update_currency() -> bool:
     data = None
     try:
         data = pd.read_csv(
-            datapath / filename, usecols=[0, 1], names=["id", "name"], delimiter=","
+            datapath / filename, usecols=[0, 2], names=["num", "name"], delimiter=","
         )
     except:
         print(f"first need to download a file with currencies")
