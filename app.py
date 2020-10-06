@@ -10,7 +10,8 @@ from dash.dependencies import Input, Output
 import plotly.express as px
 import pandas as pd
 from pathlib import Path
-from data_processing.data_processing import currency_find_leader_sec_points
+from data_processing.data_processing import pair_find_leader, find_cp_leaderpoints_minutes, find_cp_last_datetime
+from db.db_model import db, Currency, Saler, Currency_pair
 
 
 
@@ -20,26 +21,29 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 colors = {"background": "#111111", "text": "#7FDBFF"}
 
-sec_csv = Path(__file__).parent / 'data_processing' / 'sec.csv'
-print(sec_csv)
+c_give_num = 29
+c_take_num = 139
 
-df = pd.read_csv(sec_csv)
-cur_df = pd.read_csv('id_currency.csv', sep=';',names=['id', 'name'])
+# pair_df = pd.read_sql(db.session.query(Currency_pair).filter(Currency_pair.cur_give_num == cur_give_num,
+#           Currency_pair.cur_take_num == cur_take_num).statement,db.session.bind)
+last_date = find_cp_last_datetime(c_give_num, c_take_num)
+print('last_date', last_date)
+leader = pair_find_leader(currency_give_num=c_give_num, currency_take_num=c_take_num,last_datetime=last_date)
+print('111111111111111111111', leader)
+points = find_cp_leaderpoints_minutes(leader_num=leader, last_datetime=last_date,
+        currency_give=c_give_num, currency_take=c_take_num)
+print(points)
+# leader, points = (cur_give_num, cur_take_num)
+# cur_give_name = pd.read_sql(db.session.query(Currency.name).filter(Currency.num == cur_give_num).statement,
+#                 db.session.bind).values[0][0]
+# cur_take_name = pd.read_sql(db.session.query(Currency.name).filter(Currency.num == cur_take_num).statement,
+#                 db.session.bind).values[0][0]
 
-print(cur_df)
-
-cur_give = 25
-
-cur_take = 139
-
-
-leader, points = currency_find_leader_sec_points(cur_give, cur_take)
-
-data = df.loc[df['saler_id'] == leader]
-
-name_give = cur_df.loc[cur_df['id'] == cur_give, 'name']
-name_take = cur_df.loc[cur_df['id'] == cur_take, 'name']
-fig = px.line(data, x=points['datetime'], y=points['cur_give_num'], title=f'продажа {name_give.values}\n покупка {name_take.values}')
+# print(points['amount_give'])
+if not points.empty:
+    print('aaaaaaaaaaaa',points['amount_give'])
+    fig = px.line(x=points['datetime'], y=points['amount_give'])
+              # title=f'продажа {cur_give_name}\n покупка {cur_take_name}')
 
 
 # fig = px.bar(df, x="Fruit", y="Amount")
@@ -71,7 +75,7 @@ app.layout = html.Div(
             min=1,
             max=7,
             value=1,
-            marks={str(i):name  for i, name in zip(range(2,7),['секунды', 'десятки сек', 'минуты', 'часы', 'дни'])},
+            marks={str(i):name  for i, name in zip(range(2,7),['2 минуты', '10 минут', 'час', 'день', 'неделя'])},
             step=None
         )
     ],
