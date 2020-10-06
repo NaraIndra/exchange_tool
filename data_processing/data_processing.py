@@ -11,6 +11,7 @@ import pandas as pd
 from datetime import datetime
 from db.db_model import DATABASE_URL, Currency, Saler, Currency_pair, db
 from data_download.download_data import download
+from data_processing.utils.utils import find_minvalue_from_list
 
 datapath = Path(__file__).resolve().parents[1] / "data_download" / "datadir"
 
@@ -58,10 +59,12 @@ def find_cp_last_datetime(currency_give_num: int, currency_take_num: int) -> Opt
     Returns: дата последней заключенной сделке по данной валюте
 
     '''
-
-    last_time = db.session.query(Currency_pair.datetime)\
-    .filter(Currency_pair.cur_give_num == currency_give_num, Currency_pair.cur_take_num == currency_take_num)\
-    .order_by(desc('datetime')).limit(1).all()
+    try:
+        last_time = db.session.query(Currency_pair.datetime)\
+        .filter(Currency_pair.cur_give_num == currency_give_num, Currency_pair.cur_take_num == currency_take_num)\
+        .order_by(desc('datetime')).limit(1).all()
+    except Exception as e:
+        print(e)
 
     return last_time[0][0]
 
@@ -80,19 +83,13 @@ def pair_find_leader(currency_give_num: int, currency_take_num: int, last_dateti
             Currency_pair.cur_take_num == currency_take_num,
             Currency_pair.datetime == last_datetime
             ).all()
-    print(data)
-    # except:
-    #     print(f'no such pair in db: {currency_give_num=}, {currency_take_num=} at {last_datetime=}')
-    #     return None
     if not len(data):
         print('shit')
         return  None
     #здесь вытягиваю список для проверки, нужное значение - saler_num
     #переделать с df на обычный список
-    min_value_saler_num = data.loc[data['amount_give'] == data['amount_give'].min(),
-    ['saler_num', 'amount_give', 'amount_take']]
-    print(min_value_saler_num)
-    return int(min_value_saler_num['saler_num'].values)
+    min_value_saler_num = find_minvalue_from_list(data)
+    return min_value_saler_num
 
 def find_cp_leaderpoints_minutes(leader_num: int, last_datetime: DateTime,
                                  currency_give: int, currency_take: int) -> Optional[List[float]]:
@@ -103,7 +100,7 @@ def find_cp_leaderpoints_minutes(leader_num: int, last_datetime: DateTime,
 
     Returns:список флотов(количество отдаваемой валюты в промежутке 1 часа(30 точек))
     '''
-    print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!','leader-nun', leader_num)
+    print(leader_num, currency_take, currency_give)
     try:
         data = pd.read_sql(
             db.session.query(Currency_pair.datetime, Currency_pair.amount_give)
@@ -118,7 +115,6 @@ def find_cp_leaderpoints_minutes(leader_num: int, last_datetime: DateTime,
     except:
         print(f'no such pair in db: {currency_give=}, {currency_take=}')
         return None
-    print('xxxxxxxxxxxxxxx',data)
     return data
 
 
