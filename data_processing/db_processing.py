@@ -119,26 +119,20 @@ def make_new_pair() -> bool:
         pairs = pairs.values.tolist()
         ans = []
         for pair in pairs:
-            print(pair)
             pair_tuple = Currency_pair(
                 cur_give_num=pair[0],
                 cur_take_num=pair[1],
                 saler_num = pair[2],
-                # currency_give_id=pair[0],
-                # currency_take_id=pair[1],
-                # saler_id=pair[2],
                 amount_give=pair[3],
                 amount_take=pair[4],
                 volume=pair[5],
                 datetime=pair[6],
             )
-            print('a')
             ans.append(pair_tuple)
         db.session.add_all(ans)
         try:
             db.session.commit()
         except SQLAlchemyError as e:
-            print(str(e))
             db.session.rollback()
         data = db.session.query(Currency_pair).all()
     elif count >= 5:

@@ -24,29 +24,17 @@ colors = {"background": "#111111", "text": "#7FDBFF"}
 c_give_num = 29
 c_take_num = 139
 
-# pair_df = pd.read_sql(db.session.query(Currency_pair).filter(Currency_pair.cur_give_num == cur_give_num,
-#           Currency_pair.cur_take_num == cur_take_num).statement,db.session.bind)
+
+#обработка датки
 last_date = find_cp_last_datetime(c_give_num, c_take_num)
-print('last_date', last_date)
 leader = pair_find_leader(currency_give_num=c_give_num, currency_take_num=c_take_num,last_datetime=last_date)
-print('111111111111111111111', leader)
 points = find_cp_leaderpoints_minutes(leader_num=leader, last_datetime=last_date,
         currency_give=c_give_num, currency_take=c_take_num)
-print(points)
-# leader, points = (cur_give_num, cur_take_num)
-# cur_give_name = pd.read_sql(db.session.query(Currency.name).filter(Currency.num == cur_give_num).statement,
-#                 db.session.bind).values[0][0]
-# cur_take_name = pd.read_sql(db.session.query(Currency.name).filter(Currency.num == cur_take_num).statement,
-#                 db.session.bind).values[0][0]
 
-# print(points['amount_give'])
+#отрисовка датки
 if not points.empty:
-    print('aaaaaaaaaaaa',points['amount_give'])
     fig = px.line(x=points['datetime'], y=points['amount_give'])
               # title=f'продажа {cur_give_name}\n покупка {cur_take_name}')
-
-
-# fig = px.bar(df, x="Fruit", y="Amount")
 
 fig.update_layout(
     plot_bgcolor=colors["background"],
