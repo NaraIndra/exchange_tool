@@ -4,9 +4,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from pathlib import Path
 import pandas as pd
 from db.db_model import db, Currency, Saler, Currency_pair
-
 from data_download.download_data import download
-
+from apscheduler.schedulers.background import BackgroundScheduler
 datapath = Path(__file__).resolve().parents[1] / "data_download" / "datadir"
 
 
@@ -15,7 +14,7 @@ datapath = Path(__file__).resolve().parents[1] / "data_download" / "datadir"
 # session = Session()
 
 
-def update_currency() -> bool:
+def update_currency(session: db.session) -> bool:
 
     """
     Обновляет информацию по валюте из соответствующего файла в data_download/datadir/bm_cy.csv
@@ -34,21 +33,18 @@ def update_currency() -> bool:
         print(f"first need to download a file with currencies")
         return False
     ans = []
+    #нет проверки на уникальность номеров
     for row in data.values.tolist():
-        if not ans:
-            ans.append((row[0], row[1]))
-        elif (not row[0] in [x[0] for x in ans]) and (
-                not row[1] in [x[1] for x in ans]
-        ):
-            ans.append((row[0], row[1]))
-    db.session.query(Currency).delete()
-    for x in ans:
-        cur = Currency(num=x[0], name=x[1])
-        db.session.add(cur)
-    db.session.commit()
+            ans.append(Currency(num=row[0], name=row[1]))
+    session.query(Currency).delete()
+    try:
+        session.add_all(ans)
+        session.commit()
+    except SQLAlchemyError as e:
+        print(e)
+        session.rollback()
 
-
-def update_saler() -> bool:
+def update_saler(session: db.session) -> bool:
 
     """
     Обновляет информацию по валюте из соответствующего файла в data_download/datadir/bm_exch.csv
@@ -67,21 +63,19 @@ def update_saler() -> bool:
         print(f"first need to download a file with currencies")
         return False
     ans = []
+    #нет проверки на уникальность номеров
     for row in data.values.tolist():
-        if not ans:
-            ans.append((row[0], row[1]))
-        elif (not row[0] in [x[0] for x in ans]) and (
-                not row[1] in [x[1] for x in ans]
-        ):
-            ans.append((row[0], row[1]))
-    db.session.query(Saler).delete()
-    for x in ans:
-        cur = Saler(num=x[0], name=x[1])
-        db.session.add(cur)
-    db.session.commit()
+        ans.append(Saler(num=row[0], name=row[1]))
+    session.query(Saler).delete()
+    try:
+        session.add_all(ans)
+        session.commit()
+    except SQLAlchemyError as e:
+        print(e)
+        session.rollback()
 
 
-def make_new_pair() -> bool:
+def make_new_pair(session: db.session) -> bool:
     """
     Обновляет информацию по курсу обмена из файла data_download/datadir/0_bm_exch.csv
     скачиваем новый пакет данных, пополняем таблицу парой с курсом обмена
@@ -114,7 +108,7 @@ def make_new_pair() -> bool:
     pairs['datetime'] =  pd.to_datetime(pairs['datetime'])
     count = db.session.query(Currency_pair.datetime).distinct(Currency_pair.datetime).count()
     print(count)
-    if count < 5:
+    if count < 4:
         start_time = time.time()
         pairs = pairs.values.tolist()
         ans = []
@@ -134,40 +128,46 @@ def make_new_pair() -> bool:
             db.session.commit()
         except SQLAlchemyError as e:
             db.session.rollback()
-        data = db.session.query(Currency_pair).all()
-    elif count >= 5:
-        min_date = db.session.query(Currency_pair.datetime).distinct(Currency_pair.datetime).all().sort()
-        print(min_date)
-    # elif count >= 50:
-    #     # удалить самый давний и вставить новый
-    #     pass
-    # return True
+    elif count >= 4:
+        try:
+            min_date = db.session.query(Currency_pair.datetime).distinct(Currency_pair.datetime)\
+            .order_by('datetime').limit(1).all()
+        except SQLAlchemyError as e:
+            print(e)
+            db.session.rollback()
+        try:
+            db.session.query(Currency_pair).filter(Currency_pair.datetime == min_date[0][0]).delete()
+            db.session.commit()
+        except SQLAlchemyError as e:
+            print(e)
+            db.session.rollback()
 
-# a = Currency_pair.query.limit(100)
-# print([x.currency_give_id for x in a])
-# make_new_pair()
 
 
-def update_data() -> bool:
+count = 0
+
+def update_data(session: db.session, sched:BackgroundScheduler) -> bool:
     """
     обновляет данные всех трех таблиц, скачивая архив из ресурса
 
     Returns:
     """
-    # try:
-    # download()
-    # except:
+    global count
+    sched.print_jobs()
+    print('Count: ', count)
+    count += 1
     start_time = time.time()
     try:
         download()
-        update_currency()
-        update_saler()
-        make_new_pair()
-    except:
-        print(f"скачивание не удалось")
-
-
+    except Exception as e:
+        print(e)
+    try:
+        update_currency(session)
+        update_saler(session)
+        make_new_pair(session)
+    except Exception as e:
+        print(e)
+    print('Count: ', count)
     print(f'! {time.time() - start_time}')
 
-update_data()
 
