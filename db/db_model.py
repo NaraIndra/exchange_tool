@@ -69,4 +69,5 @@ class Currency_pair(db.Model):
                f'{self.amount_give=}\n{self.amount_take=}\n{self.volume=}'\
                f'{self.datetime}'
 
+# db.drop_all()
 db.create_all()

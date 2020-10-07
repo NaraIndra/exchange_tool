@@ -57,8 +57,8 @@ def download() -> bool:
                 dat_to_csv_converter(f"{file}")
         cleaner("dat")
         return True
-    except:
-        return False
+    except Exception as e:
+        print(e)
 
 
 def downloader():
