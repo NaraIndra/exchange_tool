@@ -16,11 +16,14 @@ from data_processing.data_processing import (
     find_cp_leaderpoints_minutes,
     find_cp_last_datetime,
 )
-from data_processing.db_processing import (
-    update_data
-)
+from data_processing.db_processing import update_data
 from db.db_model import db, Currency, Saler, Currency_pair
-
+from globals import (
+    minute2_datetime_label_g,
+    minute10_datetime_label_g,
+    hour_datetime_label_g,
+    day_datetime_label_g,
+)
 
 
 external_stylesheets = ["https://codepen.io/chriddyp/pen/bWLwgP.css"]
@@ -35,7 +38,7 @@ c_take_num = 139
 session = db.session
 
 sched = BackgroundScheduler(daemon=True)
-sched.add_job(update_data, args=[db.session, sched], trigger='interval',minutes=2)
+sched.add_job(update_data, args=[db.session, sched], trigger="interval", minutes=2)
 sched.start()
 # обработка датки
 # update_data()
@@ -109,9 +112,9 @@ app.layout = html.Div(
 #         size_max=55,
 #     )
 
-    # fig.update_layout(transition_duration=500)
-    #
-    # return fig
+# fig.update_layout(transition_duration=500)
+#
+# return fig
 
 
 if __name__ == "__main__":

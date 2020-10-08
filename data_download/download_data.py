@@ -30,13 +30,14 @@ else:
     filepath = path / "info.zip"
 
 
-def download() -> bool:
+def download() -> datetime:
     '''
     Загружает данные единожды
     Returns: успех завершения операции
 
     '''
     filename = ""
+    time = None
     if url.find("/"):
         filename = url.rsplit("/", 1)[1]
         zipfilepath = zippath / filename
@@ -54,9 +55,9 @@ def download() -> bool:
         for file in os.listdir(zippath):
             if ".dat" in  file:
                 # os.rename(zippath / file, zippath / f"0_{file}")
-                dat_to_csv_converter(f"{file}")
+                time = dat_to_csv_converter(f"{file}")
         cleaner("dat")
-        return True
+        return time
     except Exception as e:
         print(e)
 

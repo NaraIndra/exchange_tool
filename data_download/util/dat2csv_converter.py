@@ -9,7 +9,8 @@ path = Path(__file__).parent
 # Path(path / "zipdir").mkdir(parents=True, exist_ok=True)
 # Path(path / 'datadir').mkdir(parents=True, exist_ok=True)
 
-def dat_to_csv_converter(filename):
+def dat_to_csv_converter(filename) -> datetime:
+    time = None
     zippath = Path(__file__).resolve().parents[1] / 'zipdir'
     datapath = Path(__file__).resolve().parents[1] / 'datadir'
     new_filename = filename[:-3] + 'csv'
@@ -24,3 +25,4 @@ def dat_to_csv_converter(filename):
             # row = row[0:6]
             row.append(time)
             csv_writer.writerow(row)
+    return time
