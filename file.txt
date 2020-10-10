@@ -1,0 +1,14 @@
+/plotlydash-flask-tutorial
+├── /plotlyflask_tutorial
+│   ├── __init__.py
+│   ├── routes.py
+│   ├── /static
+│   ├── /templates
+│   └── /plotlydash
+│       └── dashboard.py
+├── /data
+├── README.md
+├── config.py
+├── requirements.txt
+├── start.sh
+└── wsgi.py

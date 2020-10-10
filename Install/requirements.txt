@@ -40,3 +40,4 @@ lxml
 flask-login
 dash
 pandas
+apscheduler
