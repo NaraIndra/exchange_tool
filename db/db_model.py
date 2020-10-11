@@ -1,4 +1,7 @@
 from pathlib import Path
+# from app import server
+from sm import db, server
+# from sm import db
 from sqlalchemy.orm import relationship
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
@@ -16,24 +19,24 @@ from sqlalchemy import (
     text,
 )
 
-SQLALCHEMY_TRACK_MODIFICATIONS = False
-DATABASE_URL = f"sqlite:///{Path(__file__).parent}/exchange.db"
-app = Flask(__name__)
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
-app.config['SQLALCHEMY_ECHO'] = True
+# SQLALCHEMY_TRACK_MODIFICATIONS = False
+# DATABASE_URL = f"sqlite:///{Path(__file__).parent}/exchange.db"
+# app = Flask(__name__)
+# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
+# app.config['SQLALCHEMY_ECHO'] = True
 
-db = SQLAlchemy(app)
+# db = SQLAlchemy(server)
 
 #эта хрень нужна потому что по внешние ключи в sqlite не слушаются
 #(дефолтное неслушание внешних ключей сделано для
 #обратной совместимости в рамках sqlite)
-if 'sqlite' in app.config['SQLALCHEMY_DATABASE_URI']:
+if 'sqlite' in server.config['SQLALCHEMY_DATABASE_URI']:
     def _fk_pragma_on_connect(dbapi_con, con_record):  # noqa
         dbapi_con.execute('pragma foreign_keys=ON')
 
 
-    with app.app_context():
+    with server.app_context():
         from sqlalchemy import event
 
         event.listen(db.engine, 'connect', _fk_pragma_on_connect)
@@ -69,5 +72,5 @@ class Currency_pair(db.Model):
                f'{self.amount_give=}\n{self.amount_take=}\n{self.volume=}'\
                f'{self.datetime}'
 
-# db.drop_all()
+db.drop_all()
 db.create_all()

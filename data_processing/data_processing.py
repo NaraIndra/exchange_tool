@@ -9,7 +9,8 @@ from sqlalchemy.orm import sessionmaker
 from pathlib import Path
 import pandas as pd
 from datetime import datetime
-from db.db_model import DATABASE_URL, Currency, Saler, Currency_pair, db
+from db.db_model import Currency, Saler, Currency_pair
+from sm import db
 from data_download.download_data import download
 from data_processing.utils.utils import find_minvalue_from_list
 
@@ -20,6 +21,7 @@ datapath = Path(__file__).resolve().parents[1] / "data_download" / "datadir"
 # Session = sessionmaker(bind=engine)
 # session = Session()
 
+print(db, dir(db))
 
 def currency_retrieval(filename) -> Optional[pd.DataFrame]:
 
@@ -59,12 +61,16 @@ def find_cp_last_datetime(currency_give_num: int, currency_take_num: int) -> Opt
     Returns: дата последней заключенной сделке по данной валюте
 
     '''
+    last_time = None
     try:
         last_time = db.session.query(Currency_pair.datetime)\
         .filter(Currency_pair.cur_give_num == currency_give_num, Currency_pair.cur_take_num == currency_take_num)\
         .order_by(desc('datetime')).limit(1).all()
+        print('11111', last_time)
+        n = db.session.query(Currency_pair.datetime).all()
+        print(len(n))
     except Exception as e:
-        print(e)
+        raise
 
     return last_time[0][0]
 

@@ -16,6 +16,7 @@ from data_processing.data_processing import (
     find_cp_leaderpoints_minutes,
     find_cp_last_datetime,
 )
+from sm import app
 from data_processing.db_processing import update_data
 from db.db_model import db, Currency, Saler, Currency_pair
 from globals import (
@@ -26,9 +27,25 @@ from globals import (
 )
 
 
-external_stylesheets = ["https://codepen.io/chriddyp/pen/bWLwgP.css"]
+# external_stylesheets = ["https://codepen.io/chriddyp/pen/bWLwgP.css"]
+#
+#
+#
+#
+# SQLALCHEMY_TRACK_MODIFICATIONS = False
+# DATABASE_URL = f"sqlite:///{Path(__file__).parent}/exchange.db"
+# app = Flask(__name__)
+# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
+# app.config['SQLALCHEMY_ECHO'] = True
 
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+# db = SQLAlchemy(app)
+
+# app = dash.Dash(__name__ , external_stylesheets=external_stylesheets)
+# server = app.server
+# server.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# server.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
+# server.config['SQLALCHEMY_ECHO'] = True
 
 colors = {"background": "#111111", "text": "#7FDBFF"}
 
@@ -40,8 +57,10 @@ session = db.session
 sched = BackgroundScheduler(daemon=True)
 sched.add_job(update_data, args=[db.session, sched], trigger="interval", minutes=2)
 sched.start()
-# обработка датки
-# update_data()
+
+c_give_num = 29
+c_take_num = 139
+fig = None
 last_date = find_cp_last_datetime(c_give_num, c_take_num)
 leader = pair_find_leader(
     currency_give_num=c_give_num, currency_take_num=c_take_num, last_datetime=last_date
@@ -52,17 +71,14 @@ points = find_cp_leaderpoints_minutes(
     currency_give=c_give_num,
     currency_take=c_take_num,
 )
-
-# отрисовка датки
 if not points.empty:
     fig = px.line(x=points["datetime"], y=points["amount_give"])
-    # title=f'продажа {cur_give_name}\n покупка {cur_take_name}')
-
 fig.update_layout(
     plot_bgcolor=colors["background"],
     paper_bgcolor=colors["background"],
     font_color=colors["text"],
 )
+# return fig
 
 markdown_text = """
 Данные о курсах взяты c сайта https://www.bestchange.net
@@ -79,7 +95,7 @@ app.layout = html.Div(
         dcc.Markdown(
             markdown_text, style={"textAlign": "center", "color": colors["text"]}
         ),
-        dcc.Graph(id="graph_with_slider", figure=fig),
+        dcc.Graph(id="live_update_graph"),
         dcc.Slider(
             id="time-slider",
             min=1,
@@ -93,9 +109,41 @@ app.layout = html.Div(
             },
             step=None,
         ),
+        dcc.Interval(
+            id='interval-component',
+            interval=1 * 1000 * 10, # в милисекундах
+            n_intervals=0
+        )
     ],
 )
 
+@app.callback(
+    Output(component_id='live_update_graph', component_property='children'),
+    [Input('interval-component', 'n_intervals')]
+)
+def update_plot(n):
+    c_give_num = 29
+    c_take_num = 139
+    fig = None
+    last_date = find_cp_last_datetime(c_give_num, c_take_num)
+    print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!', last_date)
+    leader = pair_find_leader(
+        currency_give_num=c_give_num, currency_take_num=c_take_num, last_datetime=last_date
+    )
+    points = find_cp_leaderpoints_minutes(
+        leader_num=leader,
+        last_datetime=last_date,
+        currency_give=c_give_num,
+        currency_take=c_take_num,
+    )
+    if not points.empty:
+        fig = px.line(x=points["datetime"], y=points["amount_give"])
+    fig.update_layout(
+        plot_bgcolor=colors["background"],
+        paper_bgcolor=colors["background"],
+        font_color=colors["text"],
+    )
+    return fig
 
 # @app.callback(Output("graph-with-slider", "figure"), [Input("year-slider", "value")])
 # def update_figure(selected_year):

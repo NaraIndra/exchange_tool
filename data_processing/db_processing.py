@@ -124,7 +124,7 @@ def make_new_pair(
     )
     print(count)
     if count < 4:
-        start_time = time.time()
+        # start_time = time.time()
         pairs = pairs.values.tolist()
         ans = []
         for pair in pairs:
@@ -183,7 +183,7 @@ def update_data(session: db.session, sched: BackgroundScheduler) -> bool:
     sched.print_jobs()
     print("Count: ", count)
     count += 1
-    start_time = time.time()
+    # start_time = time.time()
     try:
         time = download()
     except Exception as e:
@@ -201,7 +201,7 @@ def update_data(session: db.session, sched: BackgroundScheduler) -> bool:
     print("Count: ", count)
     current = session.query(Currency_pair.datetime).order_by(Currency_pair.datetime)
 
-    print(f"! {time.time() - start_time}")
+    # print(f"! {time.time() - start_time}")
 
 
 def process_minute2_timer(time: datetime) -> bool:
