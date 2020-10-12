@@ -3,10 +3,11 @@ from sqlalchemy import func, distinct, tuple_
 from sqlalchemy.exc import SQLAlchemyError
 from pathlib import Path
 import pandas as pd
-from db.db_model import db, Currency, Saler, Currency_pair
+from db.db_model import Currency, Saler, Currency_pair
 from data_download.download_data import download
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime
+from sm import db
 from globals import (
     minute2_datetime_label_g,
     minute10_datetime_label_g,
@@ -118,7 +119,7 @@ def make_new_pair(
     ans = []
     pairs["datetime"] = pd.to_datetime(pairs["datetime"])
     count = (
-        db.session.query(Currency_pair.datetime)
+        session.query(Currency_pair.datetime)
         .distinct(Currency_pair.datetime)
         .count()
     )
@@ -138,15 +139,15 @@ def make_new_pair(
                 datetime=pair[6],
             )
             ans.append(pair_tuple)
-        db.session.add_all(ans)
+        session.add_all(ans)
         try:
-            db.session.commit()
+            session.commit()
         except SQLAlchemyError as e:
-            db.session.rollback()
+            session.rollback()
     elif count >= 4:
         try:
             min_date = (
-                db.session.query(Currency_pair.datetime)
+                session.query(Currency_pair.datetime)
                 .distinct(Currency_pair.datetime)
                 .order_by("datetime")
                 .limit(1)
@@ -154,15 +155,15 @@ def make_new_pair(
             )
         except SQLAlchemyError as e:
             print(e)
-            db.session.rollback()
+            session.rollback()
         try:
-            db.session.query(Currency_pair).filter(
+            session.query(Currency_pair).filter(
                 Currency_pair.datetime == min_date[0][0]
             ).delete()
-            db.session.commit()
+            session.commit()
         except SQLAlchemyError as e:
             print(e)
-            db.session.rollback()
+            session.rollback()
 
 
 count = 0

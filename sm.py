@@ -12,4 +12,3 @@ server.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 server.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 server.config['SQLALCHEMY_ECHO'] = True
 db = SQLAlchemy(server)
-# time = db.session.query(Cu)
