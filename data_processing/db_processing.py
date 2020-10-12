@@ -124,27 +124,25 @@ def make_new_pair(
         .count()
     )
     print(count)
-    if count < 4:
-        # start_time = time.time()
-        pairs = pairs.values.tolist()
-        ans = []
-        for pair in pairs:
-            pair_tuple = Currency_pair(
-                cur_give_num=pair[0],
-                cur_take_num=pair[1],
-                saler_num=pair[2],
-                amount_give=pair[3],
-                amount_take=pair[4],
-                volume=pair[5],
-                datetime=pair[6],
-            )
-            ans.append(pair_tuple)
-        session.add_all(ans)
-        try:
-            session.commit()
-        except SQLAlchemyError as e:
-            session.rollback()
-    elif count >= 4:
+    pairs = pairs.values.tolist()
+    ans = []
+    for pair in pairs:
+        pair_tuple = Currency_pair(
+            cur_give_num=pair[0],
+            cur_take_num=pair[1],
+            saler_num=pair[2],
+            amount_give=pair[3],
+            amount_take=pair[4],
+            volume=pair[5],
+            datetime=pair[6],
+        )
+        ans.append(pair_tuple)
+    session.add_all(ans)
+    try:
+        session.commit()
+    except SQLAlchemyError as e:
+        session.rollback()
+    if count > 30:
         try:
             min_date = (
                 session.query(Currency_pair.datetime)

@@ -8,6 +8,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
 import plotly.express as px
+import plotly.graph_objs as go
 import pandas as pd
 from pathlib import Path
 from data_processing.data_processing import (
@@ -58,12 +59,31 @@ app.layout = html.Div(
         dcc.Markdown(
             markdown_text, style={"textAlign": "center", "color": colors["text"]}
         ),
+        dcc.Dropdown(id="give_currency_dropdown",
+        options=[
+            {'label': 'New York City', 'value': 'NYC'},
+            {'label': 'Montreal', 'value': 'MTL'},
+            {'label': 'San Francisco', 'value': 'SF'}
+        ],
+        placeholder="Выберите отдаваемую валюту",
+        ),
+        dcc.Dropdown(id="take_currency_dropdown",
+            options=[
+                {'label': 'New York City', 'value': 'NYC'},
+                {'label': 'Montreal', 'value': 'MTL'},
+                {'label': 'San Francisco', 'value': 'SF'}
+            ],
+            placeholder="Выберите получаемую валюту",
+        ),
         dcc.Graph(id="live_update_graph"),
         dcc.Interval(
             id='interval-component',
             interval=1 * 1000 * 50, # в милисекундах
             n_intervals=0
         )
+        # dcc.Slider(
+        #
+        # )
     ],
 )
 
@@ -89,6 +109,7 @@ def update_plot(n):
     if points.empty:
         return None
     fig = px.line(x=points["datetime"], y=points["amount_give"])
+    # fig.add_trace(go.line(x=points["datetime"], y=points["amount_take"]))
     fig.update_layout(
         plot_bgcolor=colors["background"],
         paper_bgcolor=colors["background"],
