@@ -31,7 +31,8 @@ options = [{"label": x[1], "value": x[0]} for x in data.values]
 
 
 sched = BackgroundScheduler(daemon=True)
-sched.add_job(update_data, args=[db.session, sched], trigger="interval", minutes=2)
+#sched.add_job(update_data, args=[db.session, sched], trigger="interval", minutes=2)
+sched.add_job(update_data_1, args=[sched], trigger="interval", minutes=2)
 sched.start()
 
 markdown_text = """
@@ -78,8 +79,6 @@ def update_options(search_value):
     [dash.dependencies.Input("take_currency_dropdown_dynamic", "search_value")],
 )
 def update_options(search_value):
-    # if not search_value:
-    #     raise PreventUpdate
     if not search_value:
         return options
     return [o for o in options if search_value in o["label"]]

@@ -5,6 +5,7 @@ import csv
 from zipfile import ZipFile
 from pathlib import Path
 from datetime import datetime
+from shutil import copyfile
 from data_download.util.cleaner import cleaner
 from data_download.util.dat2csv_converter import dat_to_csv_converter
 
@@ -12,9 +13,11 @@ url = "http://api.bestchange.ru/info.zip"
 path = Path(__file__).parent
 zippath = path / "zipdir"
 datapath = path / "datadir"
+datapandaspath = path / 'datapandasdir'
 
 Path(path / "zipdir").mkdir(parents=True, exist_ok=True)
 Path(path / 'datadir').mkdir(parents=True, exist_ok=True)
+Path(path / 'datapandasdir').mkdir(parents=True, exist_ok=True)
 
 
 from data_download.util.cleaner import cleaner
@@ -56,11 +59,15 @@ def download() -> datetime:
             if ".dat" in  file:
                 # os.rename(zippath / file, zippath / f"0_{file}")
                 time = dat_to_csv_converter(f"{file}")
+        for file in os.listdir(datapath):
+            print(file)
+            copyfile(datapath / file, datapandaspath / file)
         cleaner("dat")
         return time
     except Exception as e:
         print(e)
 
+download()
 
 def downloader():
     '''

@@ -16,7 +16,7 @@ from globals import (
 )
 
 datapath = Path(__file__).resolve().parents[1] / "data_download" / "datadir"
-
+datapandaspath = Path(__file__).resolve().parents[1] / "data_download" / "datapandasdir"
 
 # engine = create_engine(DATABASE_URL, echo=True)
 # Session = sessionmaker(bind=engine)
@@ -164,6 +164,116 @@ def make_new_pair(
             session.rollback()
 
 
+
+def make_new_pair_1(
+        minute2: bool, minute10: bool, hour: bool, day: bool
+) -> bool:
+    """
+    Обновляет информацию по курсу обмена из файла data_download/datadir/0_bm_exch.csv
+    скачиваем новый пакет данных, пополняем таблицу парой с курсом обмена
+    Returns:
+        True-удача
+        False-неудача
+
+    """
+    filename = "bm_rates.csv"
+    pairs = None
+    db = None
+    try:
+        db = pd.read_csv(
+            datapath / filename,
+            usecols=[0, 1, 2, 3, 4, 5, 8],
+            names=[
+                "cur_give_id",
+                "cur_take_id",
+                "saler_id",
+                "amount_give",
+                "amount_take",
+                "volume",
+                "datetime",
+            ],
+            delimiter=",",
+            )
+    except:
+        print(f"first need to download a file with currencies")
+        db = pd.DataFrame(columns=['c', 'B', 'C', 'D', 'E', 'F', 'G'])
+        return False
+
+    try:
+        pairs = pd.read_csv(
+            datapath / filename,
+            usecols=[0, 1, 2, 3, 4, 5, 8],
+            names=[
+                "cur_give_id",
+                "cur_take_id",
+                "saler_id",
+                "amount_give",
+                "amount_take",
+                "volume",
+                "datetime",
+            ],
+            delimiter=",",
+            )
+    except:
+        print(f"first need to download a file with currencies")
+        db = pd.DataFrame(columns = [
+                                   "cur_give_id",
+                                   "cur_take_id",
+                                   "saler_id",
+                                   "amount_give",
+                                   "amount_take",
+                                   "volume",
+                                   "datetime",
+                                    ])
+
+    ans = []
+    pairs["datetime"] = pd.to_datetime(pairs["datetime"])
+    #count = (
+    #    session.query(Currency_pair.datetime)
+    #        .distinct(Currency_pair.datetime)
+    #        .count()
+    #)
+    count = db.datetime.valut_counts()
+    print(count)
+    pairs = pairs.values.tolist()
+    ans = []
+    for pair in pairs:
+        pair_tuple = Currency_pair(
+            cur_give_num=pair[0],
+            cur_take_num=pair[1],
+            saler_num=pair[2],
+            amount_give=pair[3],
+            amount_take=pair[4],
+            volume=pair[5],
+            datetime=pair[6],
+        )
+        ans.append(pair_tuple)
+    session.add_all(ans)
+    try:
+        session.commit()
+    except SQLAlchemyError as e:
+        session.rollback()
+    if count > 30:
+        try:
+            min_date = (
+                session.query(Currency_pair.datetime)
+                    .distinct(Currency_pair.datetime)
+                    .order_by("datetime")
+                    .limit(1)
+                    .all()
+            )
+        except SQLAlchemyError as e:
+            print(e)
+            session.rollback()
+        try:
+            session.query(Currency_pair).filter(
+                Currency_pair.datetime == min_date[0][0]
+            ).delete()
+            session.commit()
+        except SQLAlchemyError as e:
+            print(e)
+            session.rollback()
+
 count = 0
 
 
@@ -202,6 +312,40 @@ def update_data(session: db.session, sched: BackgroundScheduler) -> bool:
 
     # print(f"! {time.time() - start_time}")
 
+def update_data_1(sched: BackgroundScheduler) -> bool:
+    """
+    обновляет данные всех трех таблиц, скачивая архив из ресурса
+
+    Returns:
+    """
+    time = None
+    global count
+    global minute2_datetime_label_g
+    global minute10_datetime_label_g
+    global hour_datetime_label_g
+    global day_datetime_label_g
+    sched.print_jobs()
+    print("Count: ", count)
+    count += 1
+    # start_time = time.time()
+    try:
+        time = download()
+    except Exception as e:
+        print(e)
+    need_update_minute_2 = process_minute2_timer(time)
+    need_update_minute_10 = process_minute10_timer(time)
+    try:
+        #update_currency(session)
+        #update_saler(session)
+        make_new_pair(
+            session, need_update_minute_2, need_update_minute_10, False, False
+        )
+    except Exception as e:
+        print(e)
+    print("Count: ", count)
+    current = session.query(Currency_pair.datetime).order_by(Currency_pair.datetime)
+
+    # print(f"! {time.time() - start_time}")
 
 def process_minute2_timer(time: datetime) -> bool:
     """
