@@ -62,6 +62,8 @@ def download() -> datetime:
         for file in os.listdir(datapath):
             print(file)
             copyfile(datapath / file, datapandaspath / file)
+            new_filename = file[:-4] + '_new.csv'
+            os.rename(datapandaspath / file, datapandaspath / new_filename)
         cleaner("dat")
         return time
     except Exception as e:

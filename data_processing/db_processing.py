@@ -8,6 +8,8 @@ from data_download.download_data import download
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime
 from sm import db
+import os
+from shutil import copyfile
 from globals import (
     minute2_datetime_label_g,
     minute10_datetime_label_g,
@@ -23,7 +25,7 @@ datapandaspath = Path(__file__).resolve().parents[1] / "data_download" / "datapa
 # session = Session()
 
 
-def update_currency(session: db.session) -> bool:
+def update_currency_pandas() -> bool:
 
     """
     Обновляет информацию по валюте из соответствующего файла в data_download/datadir/bm_cy.csv
@@ -41,20 +43,10 @@ def update_currency(session: db.session) -> bool:
     except:
         print(f"first need to download a file with currencies")
         return False
-    ans = []
-    # нет проверки на уникальность номеров
-    for row in data.values.tolist():
-        ans.append(Currency(num=row[0], name=row[1]))
-    session.query(Currency).delete()
-    try:
-        session.add_all(ans)
-        session.commit()
-    except SQLAlchemyError as e:
-        print(e)
-        session.rollback()
+    copyfile(datapath / filename, datapandaspath / 'db_currency.csv')
 
 
-def update_saler(session: db.session) -> bool:
+def update_saler_pandas() -> bool:
 
     """
     Обновляет информацию по валюте из соответствующего файла в data_download/datadir/bm_exch.csv
@@ -72,100 +64,12 @@ def update_saler(session: db.session) -> bool:
     except:
         print(f"first need to download a file with currencies")
         return False
-    ans = []
-    # нет проверки на уникальность номеров
-    for row in data.values.tolist():
-        ans.append(Saler(num=row[0], name=row[1]))
-    session.query(Saler).delete()
-    try:
-        session.add_all(ans)
-        session.commit()
-    except SQLAlchemyError as e:
-        print(e)
-        session.rollback()
-
-
-def make_new_pair(
-    session: db.session, minute2: bool, minute10: bool, hour: bool, day: bool
-) -> bool:
-    """
-    Обновляет информацию по курсу обмена из файла data_download/datadir/0_bm_exch.csv
-    скачиваем новый пакет данных, пополняем таблицу парой с курсом обмена
-    Returns:
-        True-удача
-        False-неудача
-
-    """
-    filename = "bm_rates.csv"
-    pairs = None
-    try:
-        pairs = pd.read_csv(
-            datapath / filename,
-            usecols=[0, 1, 2, 3, 4, 5, 8],
-            names=[
-                "cur_give_id",
-                "cur_take_id",
-                "saler_id",
-                "amount_give",
-                "amount_take",
-                "volume",
-                "datetime",
-            ],
-            delimiter=",",
-        )
-    except:
-        print(f"first need to download a file with currencies")
-        return False
-    ans = []
-    pairs["datetime"] = pd.to_datetime(pairs["datetime"])
-    count = (
-        session.query(Currency_pair.datetime)
-        .distinct(Currency_pair.datetime)
-        .count()
-    )
-    print(count)
-    pairs = pairs.values.tolist()
-    ans = []
-    for pair in pairs:
-        pair_tuple = Currency_pair(
-            cur_give_num=pair[0],
-            cur_take_num=pair[1],
-            saler_num=pair[2],
-            amount_give=pair[3],
-            amount_take=pair[4],
-            volume=pair[5],
-            datetime=pair[6],
-        )
-        ans.append(pair_tuple)
-    session.add_all(ans)
-    try:
-        session.commit()
-    except SQLAlchemyError as e:
-        session.rollback()
-    if count > 30:
-        try:
-            min_date = (
-                session.query(Currency_pair.datetime)
-                .distinct(Currency_pair.datetime)
-                .order_by("datetime")
-                .limit(1)
-                .all()
-            )
-        except SQLAlchemyError as e:
-            print(e)
-            session.rollback()
-        try:
-            session.query(Currency_pair).filter(
-                Currency_pair.datetime == min_date[0][0]
-            ).delete()
-            session.commit()
-        except SQLAlchemyError as e:
-            print(e)
-            session.rollback()
+    copyfile(datapath / filename, datapandaspath / 'db_saler.csv')
 
 
 
-def make_new_pair_1(
+
+def make_new_pair_pandas(
         minute2: bool, minute10: bool, hour: bool, day: bool
 ) -> bool:
     """
@@ -177,11 +81,12 @@ def make_new_pair_1(
 
     """
     filename = "bm_rates.csv"
+    db_filename = datapandaspath / 'db_pairs_sec.csv'
     pairs = None
     db = None
     try:
         db = pd.read_csv(
-            datapath / filename,
+            datapandaspath / db_filename,
             usecols=[0, 1, 2, 3, 4, 5, 8],
             names=[
                 "cur_give_id",
@@ -196,9 +101,8 @@ def make_new_pair_1(
             )
     except:
         print(f"first need to download a file with currencies")
-        db = pd.DataFrame(columns=['c', 'B', 'C', 'D', 'E', 'F', 'G'])
-        return False
-
+        copyfile(datapath / filename, datapandaspath / db_filename)
+        return
     try:
         pairs = pd.read_csv(
             datapath / filename,
@@ -213,71 +117,29 @@ def make_new_pair_1(
                 "datetime",
             ],
             delimiter=",",
+            index = [i for i in ]
             )
     except:
         print(f"first need to download a file with currencies")
-        db = pd.DataFrame(columns = [
-                                   "cur_give_id",
-                                   "cur_take_id",
-                                   "saler_id",
-                                   "amount_give",
-                                   "amount_take",
-                                   "volume",
-                                   "datetime",
-                                    ])
+        return
 
     ans = []
-    pairs["datetime"] = pd.to_datetime(pairs["datetime"])
-    #count = (
-    #    session.query(Currency_pair.datetime)
-    #        .distinct(Currency_pair.datetime)
-    #        .count()
-    #)
-    count = db.datetime.valut_counts()
+
+    db.reset_index(drop=True, inplace=True)
+    pairs.reset_index(drop=True, inplace=True)
+
+    res = pd.concat([db, pairs], axis=0)
+    count = db.datetime.nunique()
+    print(res.shape)
     print(count)
-    pairs = pairs.values.tolist()
-    ans = []
-    for pair in pairs:
-        pair_tuple = Currency_pair(
-            cur_give_num=pair[0],
-            cur_take_num=pair[1],
-            saler_num=pair[2],
-            amount_give=pair[3],
-            amount_take=pair[4],
-            volume=pair[5],
-            datetime=pair[6],
-        )
-        ans.append(pair_tuple)
-    session.add_all(ans)
-    try:
-        session.commit()
-    except SQLAlchemyError as e:
-        session.rollback()
     if count > 30:
-        try:
-            min_date = (
-                session.query(Currency_pair.datetime)
-                    .distinct(Currency_pair.datetime)
-                    .order_by("datetime")
-                    .limit(1)
-                    .all()
-            )
-        except SQLAlchemyError as e:
-            print(e)
-            session.rollback()
-        try:
-            session.query(Currency_pair).filter(
-                Currency_pair.datetime == min_date[0][0]
-            ).delete()
-            session.commit()
-        except SQLAlchemyError as e:
-            print(e)
-            session.rollback()
+        min_date = res.datetime.min()
+        res.drop(res[res.datetime == min_date].index, inplace = True)
+    res.to_csv(db_filename)
 
-count = 0
+make_new_pair_pandas(None, None, None, None)
 
-
-def update_data(session: db.session, sched: BackgroundScheduler) -> bool:
+def update_data_pandas(session: db.session, sched: BackgroundScheduler) -> bool:
     """
     обновляет данные всех трех таблиц, скачивая архив из ресурса
 
@@ -300,10 +162,10 @@ def update_data(session: db.session, sched: BackgroundScheduler) -> bool:
     need_update_minute_2 = process_minute2_timer(time)
     need_update_minute_10 = process_minute10_timer(time)
     try:
-        update_currency(session)
-        update_saler(session)
-        make_new_pair(
-            session, need_update_minute_2, need_update_minute_10, False, False
+        update_currency_pandas()
+        update_saler_pandas()
+        make_new_pair_pandas(
+            need_update_minute_2, need_update_minute_10, False, False
         )
     except Exception as e:
         print(e)

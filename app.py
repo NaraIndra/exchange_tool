@@ -12,7 +12,7 @@ from data_processing.data_processing import (
 )
 from db.db_model import Currency
 from sm import app, db
-from data_processing.db_processing import update_data
+from data_processing.db_processing import update_data_pandas
 from dash.exceptions import PreventUpdate
 
 
@@ -90,12 +90,12 @@ def update_plot(n):
     c_give_num = 29
     c_take_num = 139
     fig = None
-    last_date = find_cp_last_datetime(c_give_num, c_take_num)
-    leader = pair_find_leader(
+    #last_date = find_cp_last_datetime(c_give_num, c_take_num)
+    leader = pair_find_leader_pandas(
         currency_give_num=c_give_num, currency_take_num=c_take_num, last_datetime=last_date
     )
     print('leader ', leader)
-    points = find_cp_leaderpoints_minutes(
+    points = find_cp_leaderpoints_minutes_pandas(
         leader_num=leader,
         last_datetime=last_date,
         currency_give=c_give_num,

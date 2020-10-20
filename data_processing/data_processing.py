@@ -16,6 +16,7 @@ from data_processing.utils.utils import find_minvalue_from_list
 
 datapath = Path(__file__).resolve().parents[1] / "data_download" / "datadir"
 
+datapandaspath = Path(__file__).resolve().parents[1] / "data_download" / "datapandasdir"
 #
 # engine = create_engine(DATABASE_URL, echo = True)
 # Session = sessionmaker(bind=engine)
@@ -50,6 +51,35 @@ def currency_retrieval(filename) -> Optional[pd.DataFrame]:
     )
     # row = data_new[(data_new.cur_give_id == cur_1) & (data_new.cur_take_id == cur_2)]
     return data_new
+
+
+def find_cp_last_datetime_pandas(currency_give_num: int, currency_take_num: int) -> Optional[datetime]:
+    '''
+    Находит последнюю дату записи в таблице Currency_pair
+    Args:
+        currency_give_num: номер отдаваемой валюты
+        currency_take_num: номер получаемой валюты
+
+    Returns: дата последней заключенной сделке по данной валюте
+
+    '''
+    last_time = None
+    db = pd.read_csv(datapandaspath / 'db_pairs.csv')
+    last_time =  db.datetime.max()
+    return
+    try:
+        last_time = db.session.query(Currency_pair.datetime) \
+            .filter(Currency_pair.cur_give_num == currency_give_num, Currency_pair.cur_take_num == currency_take_num) \
+            .order_by(desc('datetime')).limit(1).all()
+        print('11111', last_time)
+        n = db.session.query(Currency_pair.datetime).all()
+        print(len(n))
+    except Exception as e:
+        raise
+
+    return last_time[0][0]
+
+
 
 def find_cp_last_datetime(currency_give_num: int, currency_take_num: int) -> Optional[datetime]:
     '''
@@ -96,6 +126,38 @@ def pair_find_leader(currency_give_num: int, currency_take_num: int, last_dateti
     #переделать с df на обычный список
     min_value_saler_num = find_minvalue_from_list(data)
     return min_value_saler_num
+
+
+    #leader = pair_find_leader_pandas(
+     #   currency_give_num=c_give_num, currency_take_num=c_take_num, last_datetime=last_date
+    #)
+   # print('leader ', leader)
+    #points = find_cp_leaderpoints_minutes_pandas(
+     #   leader_num=leader,
+      #  last_datetime=last_date,
+    # currency_give=c_give_num,
+    #    currency_take=c_take_num,
+    #)
+
+def pair_find_leader_pandas(currency_give_num: int, currency_take_num: int) -> Optional[int]:
+    '''
+    находит лидера по последней записи в бд currency_pair
+    Args:
+        currency_give_num:номер отдаваемой валюты
+        currency_take_num:номер получаемой валюты
+
+    Returns:номер обменника, в котором количество отдаваемой валюты
+    за получаемую валюту наименьшее
+    '''
+    db = pd.read_csv(datapandaspath / 'db_pairs.csv')
+    last_time =  db.datetime.max()
+    print(last_time)
+    return
+
+pair_find_leader_pandas(30, 129)
+
+
+
 
 def find_cp_leaderpoints_minutes(leader_num: int, last_datetime: DateTime,
                                  currency_give: int, currency_take: int) -> Optional[List[float]]:
