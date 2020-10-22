@@ -12,12 +12,13 @@ from data_processing.data_processing import (
 )
 from db.db_model import Currency
 from sm import app, db
-from data_processing.db_processing import update_data
+from data_processing.db_processing import update_data, update_currency, update_saler
 from dash.exceptions import PreventUpdate
 
 
 session = db.session
-
+update_currency(session)
+update_saler(session)
 colors = {"background": "#111111", "text": "#7FDBFF"}
 
 # currency_data = pd.read_csv('../datadir/bm_cy.csv', )
@@ -86,11 +87,15 @@ def update_options(search_value):
 
 @app.callback(
     Output(component_id='live_update_graph', component_property='figure'),
-    [Input('interval-component', 'n_intervals')])
-def update_plot(n):
-    c_give_num = 29
-    c_take_num = 139
+    [Input('interval-component', 'n_intervals'),
+     Input("give_currency_dropdown_dynamic", 'value'),
+     Input("take_currency_dropdown_dynamic", 'value')])
+def update_plot(n, give_currency_dropdown_dynamic, take_currency_dropdown_dynamic):
+    c_give_num = give_currency_dropdown_dynamic
+    c_take_num = take_currency_dropdown_dynamic
+    print(c_give_num, c_take_num)
     fig = None
+
     last_date = find_cp_last_datetime(c_give_num, c_take_num)
     leader = pair_find_leader(
         currency_give_num=c_give_num, currency_take_num=c_take_num, last_datetime=last_date
