@@ -12,7 +12,7 @@ from data_processing.data_processing import (
 )
 from db.db_model import Currency
 from sm import app, db
-from data_processing.db_processing import update_data
+from data_processing.db_processing import update_data, update_data_1
 from dash.exceptions import PreventUpdate
 
 
@@ -31,7 +31,7 @@ options = [{"label": x[1], "value": x[0]} for x in data.values]
 
 
 sched = BackgroundScheduler(daemon=True)
-#sched.add_job(update_data, args=[db.session, sched], trigger="interval", minutes=2)
+# sched.add_job(update_data, args=[db.session, sched], trigger="interval", minutes=2)
 sched.add_job(update_data_1, args=[sched], trigger="interval", minutes=2)
 sched.start()
 
