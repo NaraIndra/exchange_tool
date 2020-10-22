@@ -1,0 +1,29 @@
+# $(pwd)==$project_folder/install !!
+# file requirements.txt has to be here ! 
+
+#using python3.7, create venv:
+virtualenv ../venv
+
+#if succeded:
+
+#swithch to python3.8:
+sudo update-alternatives --config python3
+
+#go to venv:
+source ../venv/bin/activate
+#
+#install pip for python3.8 (locally under venv):
+#
+curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+#
+python3 get-pip.py --force-reinstall
+#
+
+pip install -r requirements.txt
+
+# in case of several files : requirements1.txt , requirements2.txt...
+# good method:
+cat requirements* | sort -uf| grep -v '^#' >>Result.txt
+#&&
+
+pip install -r Result.txt

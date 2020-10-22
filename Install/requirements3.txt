@@ -1,7 +1,8 @@
-apscheduler
 dash
 dash_core_components
 dash_html_components
 sqlalchemy
-flask-sqlalchemy
-requests
+flask_login
+werkzeug
+flask_sqlalchemy
+gunicorn
