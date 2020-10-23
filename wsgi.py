@@ -1,3 +1,5 @@
+# wsgi.py
+#
 from app import app
 application = app.server
 """Application entry point."""
