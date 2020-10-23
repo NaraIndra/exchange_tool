@@ -165,16 +165,13 @@ def make_new_pair(
 
 
 
-def make_new_pair_1(
-        minute2: bool, minute10: bool, hour: bool, day: bool
-) -> bool:
+def make_new_pair_1(minute2: bool, minute10: bool, hour: bool, day: bool) -> bool:
     """
     Обновляет информацию по курсу обмена из файла data_download/datadir/0_bm_exch.csv
     скачиваем новый пакет данных, пополняем таблицу парой с курсом обмена
     Returns:
         True-удача
         False-неудача
-
     """
     filename = "bm_rates.csv"
     pairs = None
@@ -337,9 +334,9 @@ def update_data_1(sched: BackgroundScheduler) -> bool:
     try:
         #update_currency(session)
         #update_saler(session)
-        make_new_pair(
-            session, need_update_minute_2, need_update_minute_10, False, False
-        )
+        make_new_pair_1(need_update_minute_2, need_update_minute_10, False, False)
+            # session, need_update_minute_2, need_update_minute_10, False, False
+        # )
     except Exception as e:
         print(e)
     print("Count: ", count)
@@ -366,8 +363,7 @@ def process_minute2_timer(time: datetime) -> bool:
         return True
     else:
         return False
-
-
+# 
 def process_minute10_timer(time: datetime) -> bool:
     """
     обновляет глобальный 2минутный таймер при необходимости и сообщает о необходимости внести

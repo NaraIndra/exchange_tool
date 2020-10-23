@@ -97,15 +97,15 @@ def pair_find_leader(currency_give_num: int, currency_take_num: int, last_dateti
     min_value_saler_num = find_minvalue_from_list(data)
     return min_value_saler_num
 
-def find_cp_leaderpoints_minutes(leader_num: int, last_datetime: DateTime,
-                                 currency_give: int, currency_take: int) -> Optional[List[float]]:
-    '''
-    Возвращает список значений количества отданной валюты у наиболее дешевого обменника
-    Args:
-        leader_num: номер лидера
+def find_cp_leaderpoints_minutes(leader_num: int, last_datetime: DateTime,currency_give: int, currency_take: int) -> Optional[List[float]]:
+    """
+        Возвращает список значений количества отданной валюты у наиболее дешевого обменника
+        Args:
+            leader_num: номер лидера
 
-    Returns:список флотов(количество отдаваемой валюты в промежутке 1 часа(30 точек))
-    '''
+        Returns:
+            список флотов(количество отдаваемой валюты в промежутке 1 часа(30 точек))
+    """    
     print(leader_num, currency_take, currency_give)
     try:
         data = pd.read_sql(
